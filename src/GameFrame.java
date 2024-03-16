@@ -1,9 +1,10 @@
 import java.awt.*;
 import javax.swing.*;
 
-public class GameFrame extends JFrame{
+public class GameFrame extends JFrame {
     GamePanel panel;
-    GameFrame(){
+
+    GameFrame() {
         panel = new GamePanel();
         this.add(panel);
         this.setTitle("Pong Game");
