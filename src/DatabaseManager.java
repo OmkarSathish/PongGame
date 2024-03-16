@@ -9,7 +9,6 @@ public class DatabaseManager {
     try {
       Class.forName("com.mysql.cj.jdbc.Driver");
 
-      // Establish connection
       Connection connection = DriverManager.getConnection(JDBC_URL, USERNAME, PASSWORD);
       return connection;
     } catch (Exception e) {
@@ -18,7 +17,6 @@ public class DatabaseManager {
     }
   }
 
-  // Method to close database connection, statement, and result set
   public static void close(Connection connection, Statement statement, ResultSet resultSet) {
     try {
       if (resultSet != null)
