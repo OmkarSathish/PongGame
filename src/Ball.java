@@ -14,7 +14,6 @@ public class Ball extends Rectangle {
         if (randomXDirection == 0)
             randomXDirection--;
         setXDirection(randomXDirection * initialSpeed);
-
         int randomYDirection = random.nextInt(2);
         if (randomYDirection == 0)
             randomYDirection--;
@@ -35,7 +34,7 @@ public class Ball extends Rectangle {
     }
 
     public void draw(Graphics g) {
-        g.setColor(Color.white);
+        g.setColor(Color.blue);
         g.fillOval(x, y, height, width);
     }
 }

@@ -14,10 +14,10 @@ public class Paddle extends Rectangle {
     public void keyPressed(KeyEvent e) {
         switch (id) {
             case 1:
-                if (e.getKeyCode() == KeyEvent.VK_E) {
+                if (e.getKeyCode() == KeyEvent.VK_W) {
                     setYDirection(-speed);
                 }
-                if (e.getKeyCode() == KeyEvent.VK_D) {
+                if (e.getKeyCode() == KeyEvent.VK_S) {
                     setYDirection(speed);
                 }
                 break;
@@ -35,10 +35,10 @@ public class Paddle extends Rectangle {
     public void keyReleased(KeyEvent e) {
         switch (id) {
             case 1:
-                if (e.getKeyCode() == KeyEvent.VK_E) {
+                if (e.getKeyCode() == KeyEvent.VK_W) {
                     setYDirection(0);
                 }
-                if (e.getKeyCode() == KeyEvent.VK_D) {
+                if (e.getKeyCode() == KeyEvent.VK_S) {
                     setYDirection(0);
                 }
                 break;
@@ -63,7 +63,7 @@ public class Paddle extends Rectangle {
 
     public void draw(Graphics g) {
         if (id == 1)
-            g.setColor(Color.blue);
+            g.setColor(Color.green);
         else
             g.setColor(Color.red);
         g.fillRect(x, y, width, height);

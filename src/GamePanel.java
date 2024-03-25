@@ -11,7 +11,9 @@ public class GamePanel extends JPanel implements Runnable {
     static final int BALL_DIAMETER = 20;
     static final int PADDLE_WIDTH = 25;
     static final int PADDLE_HEIGHT = 100;
-    static final int WINNING_SCORE = 2;
+    static final int WINNING_SCORE = 1;
+    String PLAYER_ONE_NAME;
+    String PLAYER_TWO_NAME;
     Thread gameThread;
     Image image;
     Graphics graphics;
@@ -29,26 +31,61 @@ public class GamePanel extends JPanel implements Runnable {
         this.setFocusable(true);
         this.addKeyListener(new AL());
         this.setPreferredSize(SCREEN_SIZE);
+        promptPlayerNames();
 
         gameThread = new Thread(this);
         gameThread.start();
+    }
+
+    public void promptPlayerNames() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(3, 2));
+        JLabel player1Label = new JLabel("Player 1 Name:");
+        JTextField player1TextField = new JTextField();
+        JLabel player2Label = new JLabel("Player 2 Name:");
+        JTextField player2TextField = new JTextField();
+        panel.add(player1Label);
+        panel.add(player1TextField);
+        panel.add(player2Label);
+        panel.add(player2TextField);
+
+        int result = JOptionPane.showConfirmDialog(null, panel, "Enter Player Names",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            PLAYER_ONE_NAME = player1TextField.getText();
+            PLAYER_TWO_NAME = player2TextField.getText();
+        } else {
+            PLAYER_ONE_NAME = "Player 1";
+            PLAYER_TWO_NAME = "Player 2";
+        }
     }
 
     public Connection getConnection() {
         return DatabaseManager.getConnection();
     }
 
-    public void saveScoresToDatabase(int player1Score, int player2Score) {
+    public void saveScoresToDatabase(String playerOneName, int playerOneScore, String playerTwoName,
+            int playerTwoScore) {
         Connection connection = null;
         PreparedStatement preparedStatement = null;
 
         try {
             connection = DatabaseManager.getConnection();
             if (connection != null) {
-                String sql = "INSERT INTO GamePoints.PlayerPoints (player1Score, player2Score) VALUES (?, ?)";
+                String sql = "INSERT INTO GamePoints.PlayerPoints (playerOneName, playerTwoName, playerOneScore, playerTwoScore) VALUES (?, ?, ?, ?)";
                 preparedStatement = connection.prepareStatement(sql);
-                preparedStatement.setInt(1, player1Score);
-                preparedStatement.setInt(2, player2Score);
+                if (playerOneName.length() != 0) {
+                    preparedStatement.setString(1, playerOneName);
+                } else {
+                    preparedStatement.setString(1, "playerOneName");
+                }
+                if (playerTwoName.length() != 0) {
+                    preparedStatement.setString(2, playerTwoName);
+                } else {
+                    preparedStatement.setString(2, "playerTwoName");
+                }
+                preparedStatement.setInt(3, playerOneScore);
+                preparedStatement.setInt(4, playerTwoScore);
                 preparedStatement.executeUpdate();
             }
         } catch (SQLException ex) {
@@ -71,9 +108,18 @@ public class GamePanel extends JPanel implements Runnable {
                 resultSet = preparedStatement.executeQuery();
 
                 while (resultSet.next()) {
-                    int player1Score = resultSet.getInt("player1Score");
-                    int player2Score = resultSet.getInt("player2Score");
-                    System.out.println("Player 1 Score: " + player1Score + ", Player 2 Score: " + player2Score);
+                    int playerOneScore = resultSet.getInt("playerOneScore");
+                    int playerTwoScore = resultSet.getInt("playerTwoScore");
+                    String playerOneName = resultSet.getString("playerOneName");
+                    String playerTwoName = resultSet.getString("playerTwoName");
+                    if (playerOneName.length() == 0) {
+                        playerOneName = "Player1";
+                    }
+                    if (playerTwoName.length() == 0) {
+                        playerTwoName = "Player2";
+                    }
+                    System.out.printf("%s: %d | %s: %d\n", playerOneName, playerOneScore, playerTwoName,
+                            playerTwoScore);
                 }
             }
         } catch (SQLException ex) {
@@ -151,14 +197,15 @@ public class GamePanel extends JPanel implements Runnable {
             paddle2.y = 0;
         if (paddle2.y >= (GAME_HEIGHT - PADDLE_HEIGHT))
             paddle2.y = GAME_HEIGHT - PADDLE_HEIGHT;
+
         if (ball.x <= 0) {
-            score.player2++;
+            score.player2Score++;
             newPaddles();
             newBall();
             // System.out.println("Player 2: " + score.player2);
         }
         if (ball.x >= GAME_WIDTH - BALL_DIAMETER) {
-            score.player1++;
+            score.player1Score++;
             newPaddles();
             newBall();
             // System.out.println("Player 1: " + score.player1);
@@ -166,15 +213,15 @@ public class GamePanel extends JPanel implements Runnable {
     }
 
     public void checkGameOver() {
-        if (score.player1 == WINNING_SCORE || score.player2 == WINNING_SCORE) {
+        if (score.player1Score == WINNING_SCORE || score.player2Score == WINNING_SCORE) {
             String winner;
             int winnerScore;
-            if (score.player1 == WINNING_SCORE) {
+            if (score.player1Score == WINNING_SCORE) {
                 winner = "Player 1";
-                winnerScore = score.player1;
+                winnerScore = score.player1Score;
             } else {
                 winner = "Player 2";
-                winnerScore = score.player2;
+                winnerScore = score.player2Score;
             }
             gameOver = true;
 
@@ -187,13 +234,14 @@ public class GamePanel extends JPanel implements Runnable {
             JDialog dialog = new JDialog();
             JButton restartButton = new JButton("Restart Game");
             restartButton.addActionListener(e -> {
-                saveScoresToDatabase(score.player1, score.player2);
+                saveScoresToDatabase(PLAYER_ONE_NAME, score.player1Score, PLAYER_TWO_NAME, score.player2Score);
                 checkStoredScores();
                 gameOver = false;
-                score.player1 = 0;
-                score.player2 = 0;
+                score.player1Score = 0;
+                score.player2Score = 0;
                 newPaddles();
                 newBall();
+                promptPlayerNames();
                 gameThread = new Thread(this);
                 gameThread.start();
                 dialog.dispose();
@@ -227,14 +275,6 @@ public class GamePanel extends JPanel implements Runnable {
             }
         }
     }
-
-    // public void checkWinningConditions() {
-    // if (score.player1 >= WINNING_SCORE || score.player1 >= WINNING_SCORE) {
-    // String winner = (score.player1 >= WINNING_SCORE) ? "Player 1" : "Player 2";
-    // System.out.println(winner + " wins!");
-    // System.exit(0);
-    // }
-    // }
 
     public class AL extends KeyAdapter {
         public void keyPressed(KeyEvent e) {
